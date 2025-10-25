@@ -112,14 +112,22 @@
                         <label for="subject" class="form-label">Subject Line</label>
                         <input type="text" class="form-control" id="subject" name="subject" required>
                     </div>
+                    
+                    <!-- NEW: HTML File Upload Section -->
+                    <div class="mb-3">
+                        <label for="html_body_file" class="form-label">Upload HTML Body (Optional)</label>
+                        <input class="form-control" type="file" id="html_body_file" name="html_body_file" accept=".html,.htm">
+                        <div class="form-text text-light">If you upload an HTML file, it will be used as the email body, overriding the text area below.</div>
+                    </div>
+                    <!-- END NEW SECTION -->
 
                     <div class="mb-3">
-                        <label for="body" class="form-label">Body (HTML is supported)</label>
-                        <textarea class="form-control" id="body" name="body" rows="6" placeholder="<h1>Hello!</h1><p>This is a test email.</p>" required></textarea>
+                        <label for="body" class="form-label">Or Type/Paste Body Below</label>
+                        <textarea class="form-control" id="body" name="body" rows="6" placeholder="<p>Hello,</p><p>This is the body of your email.</p>"></textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label for="attachment" class="form-label">Attachments (Optional)</label>
+                        <label for="attachment" class="form-label">Add Regular Attachments (PDF, Images, etc.)</label>
                         <input class="form-control" type="file" id="attachment" name="attachment" multiple>
                     </div>
 
