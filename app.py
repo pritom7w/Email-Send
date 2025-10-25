@@ -30,18 +30,17 @@ def send():
         server_choice = request.form['smtp_server']
         sender_name = request.form['sender_name']
         subject = request.form['subject']
-        body = request.form['body']
         
         smtp_file = request.files.get('smtp_credentials')
         customers_file = request.files.get('customers_file')
-        attachments = request.files.getlist('attachment') # Use getlist for multiple files
+        html_body_file = request.files.get('html_body_file') # NEW: Get the HTML body file
+        attachments = request.files.getlist('attachment') 
 
-        # --- 2. Process SMTP Credentials File (INSECURE) ---
+        # --- 2. Process SMTP Credentials File ---
         if not smtp_file:
             flash('Error: SMTP credentials file is missing.', 'danger')
             return redirect(url_for('index'))
 
-        # Read the file in memory without saving it
         stream = io.StringIO(smtp_file.stream.read().decode("UTF8"), newline=None)
         csv_reader = csv.reader(stream)
         try:
@@ -61,14 +60,27 @@ def send():
         if not customer_emails:
             flash('Error: No valid email addresses found in the customer list file.', 'danger')
             return redirect(url_for('index'))
+            
+        # --- 4. Determine Email Body (from file or textarea) ---
+        body_content = ""
+        if html_body_file and html_body_file.filename != '':
+            # If an HTML file is uploaded, use its content
+            body_content = html_body_file.read().decode('utf-8')
+        else:
+            # Otherwise, use the content from the text area
+            body_content = request.form['body']
+        
+        if not body_content.strip():
+            flash('Error: The email body is empty. Please type a message or upload an HTML file.', 'danger')
+            return redirect(url_for('index'))
 
-        # --- 4. Connect to SMTP Server ---
+        # --- 5. Connect to SMTP Server ---
         config = SMTP_CONFIG[server_choice]
         server = smtplib.SMTP(config['server'], config['port'])
         server.starttls()
         server.login(sender_email, sender_password)
 
-        # --- 5. Loop Through Customers and Send Emails ---
+        # --- 6. Loop Through Customers and Send Emails ---
         sent_count = 0
         for email in customer_emails:
             msg = MIMEMultipart()
@@ -76,10 +88,10 @@ def send():
             msg['To'] = email
             msg['Subject'] = subject
 
-            # Attach body
-            msg.attach(MIMEText(body, 'html'))
+            # Attach the determined body content as HTML
+            msg.attach(MIMEText(body_content, 'html'))
 
-            # Attach files
+            # Attach regular files (PDFs, images, etc.)
             for f in attachments:
                 if f and f.filename:
                     f.seek(0) # Reset file pointer to the beginning
@@ -103,5 +115,4 @@ def send():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    # For local testing only. Render will use gunicorn.
     app.run(debug=True, port=5001)
